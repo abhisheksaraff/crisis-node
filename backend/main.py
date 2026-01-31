@@ -1,11 +1,21 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from app.api.alerts import router as alerts_router
+from app.api.execute import router as execute_router
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"Crisis": "Node"}
+# GET /alerts (Feed the map)
+# GET /plan/{alert_id} (Fetches the AIs generated Response)
+# POST /execute/{alert_id} (Triggers the action when user approves)
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
+app.include_router(alerts_router, prefix="/alerts")
+app.include_router(execute_router, prefix="/execute")
+
+@app.exception_handler(404)
+async def custom_404(request: Request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={"message": f"Route {request.url.path} not found."}
+    )

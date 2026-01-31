@@ -15,7 +15,7 @@ print(floodsin(-24.93,33.62)) #an area of the limpopo which recently flooded
 
 print(floodsin(46.33,-72.52))#the St Lawrence: no flooding
 
-print(floodsin(-33.91,-58.42))#The Uruguay river
+#print(floodsin(-33.91,-58.42))#The Uruguay river
 
 print(floodsin(31.78,120.985))#The Yangtze
 

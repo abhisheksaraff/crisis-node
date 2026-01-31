@@ -57,8 +57,8 @@ def floodsin(lat, long):
         #print("\nDaily data\n", daily_dataframe)
         meanexp=daily_river_discharge[25:].mean()
         
-        print("maxfloodyet",maxfloodyet )
-        print("meanexpected", meanexp )
+        #print("maxfloodyet",maxfloodyet )
+        #print("meanexpected", meanexp )
         floodfactor=maxfloodyet/meanexp
         
         #print("flood factor", maxfloodyet/meanexp)

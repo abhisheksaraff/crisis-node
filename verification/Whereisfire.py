@@ -43,12 +43,12 @@ def firesin(cb:tuple): #cb being coordinate bounds box.
     likelihood=(number/poly_area**1.75)**0.1*25 #This looks for whether we have a wildfire in enough of the relevant region that we can meaningfully localize it as a 'disaster'.  
     return likelihood
 
-print(firesin((-84.73,  29.965, -84.07, 30.3)))
-print(firesin((-83,42,-74,46)))
-print(firesin((23.8869795809, 3.50917, 35.2980071182, 12.2480077571)))
+#print(firesin((-84.73,  29.965, -84.07, 30.3)))
+#print(firesin((-83,42,-74,46)))
+#print(firesin((23.8869795809, 3.50917, 35.2980071182, 12.2480077571)))
 
 
-def floodsin():
+def floodsin(lat, long):
 
 
     # Setup the Open-Meteo API client with cache and retry on error
@@ -60,12 +60,12 @@ def floodsin():
     # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://flood-api.open-meteo.com/v1/flood"
     params = {
-        "latitude": -24,
-        "longitude": 33,
+        "latitude": lat,
+        "longitude": long,
 	    "daily": ["river_discharge", "river_discharge_mean"],
         "past_days": 14,
         
-	    "forecast_days": 30,
+	    "forecast_days": 60,
         #"bounding_box": "-25.5,33,-24.1,34",
     }
     responses = openmeteo.weather_api(url, params=params)
@@ -87,44 +87,77 @@ def floodsin():
             inclusive = "left"
         )}
         
-        daily_data["river_discharge"] = daily_river_discharge
+        daily_data["river_discharge "] = daily_river_discharge
         daily_data["mean_discharge"] = mean_river_discharge
         daily_dataframe = pd.DataFrame(data = daily_data)
+        maxfloodyet=daily_river_discharge[0:14].max()
         print("\nDaily data\n", daily_dataframe)
+        meanexp=daily_river_discharge[14:].mean()
+        print("maxfloodyet",maxfloodyet )
+        print("meanexpected", meanexp )
+        floodfactor=maxfloodyet/meanexp
+        
+        print("flood factor", maxfloodyet/meanexp)
+        #Minor floodin
+        prognosis=""
+        if(floodfactor<1.5):
+            prognosis=("probably not major flooding")
+        elif(maxfloodyet<3000):
+            prognosis=("minor flooding, results depending on vulnerability")
+        else:
+            prognosis=("This is really quite bad. ")
+
+        return floodfactor,prognosis
 	
-floodsin()
+floodsin(-25.075,33.575)
 
-import cdsapi
-URL = 'https://ewds.climate.copernicus.eu/api'
-#key = 
-FLOOD_KEY = '766af2ab-a8ab-416a-a332-6b9f98af57e0'
-dataset = "cems-glofas-historical"
-request = {
-    "system_version": ["version_4_0"],
-    "hydrological_model": ["lisflood"],
-    "product_type": ["consolidated"],
-    "variable": ["river_discharge_in_the_last_24_hours"],
-    "hyear": [
-        "2021",
-        "2022",
-        "2023",
-        "2024",
-        "2025"
-    ],
-    "hmonth": ["01"],
-    "hday": ["01"],
-     "area": [-24.5, 42.5, -23.5, 43.5],
-    "download_format": "unarchived"
-}
+floodsin(46.33,-72.52)
 
-client = cdsapi.Client(url=URL,  key=FLOOD_KEY)
-#client.retrieve(dataset, request).download()
-#import xarray as xr
-#import cfgrib
-#ds = xr.open_dataset("file.grib", engine="cfgrib")
+floodsin(-33.4,-60)
 
-# Print Dataset object
+floodsin(31.78,120.985)
+def gribgribbingly(gribbox):#Grib them like they've never been gribbed before. 
+    import cdsapi
+    URL = 'https://ewds.climate.copernicus.eu/api'
+    #key = 
+    FLOOD_KEY = '766af2ab-a8ab-416a-a332-6b9f98af57e0'
 
-#print(ds)
+    dataset = "cems-glofas-historical"
+    request = {
+        "system_version": ["version_4_0"],
+        "hydrological_model": ["lisflood"],
+        "product_type": ["consolidated"],
+        "variable": ["river_discharge_in_the_last_24_hours"],
+        "hyear": [
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
+            "2025",
+            "2026"
+        ],
+        "hmonth": ["01"],
+        "hday": ["01"],
+        "data_format": "grib2",
+        "download_format": "unarchived",
+        "area": [-24.9, 33.4, -25.1, 33.6]
+    }
+    client = cdsapi.Client(url=URL,  key=FLOOD_KEY)
+    target=("file.grib")
+    client.retrieve(dataset, request, target)
+    #import xarray as xr
+    #import cfgrib
+    #ds = xr.open_dataset("fi   le.grib", engine="cfgrib")
 
-grbs = pygrib.open("file.grib")
+    # Print Dataset object
+
+    #print(ds)
+
+    grbs = pygrib.open("file.grib")
+    #for grb in grbs:
+    #    print(grb)
+    #    lats, lons = grb.latlons()
+    #    print(lats)
+    #    print(lons)
+    #    print(grb.values)

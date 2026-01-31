@@ -1,2 +1,5 @@
 verification/apikeys.env
 verification/.env
+.DS_Store
+frontend/node_modules/
+

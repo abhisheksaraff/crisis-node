@@ -1,0 +1,12 @@
+# Whereisfire.py dependencies
+python-dotenv>=1.0.0
+pandas>=2.0.0
+requests>=2.28.0
+pyproj>=3.6.0
+shapely>=2.0.0
+openmeteo-requests>=1.2.0
+requests-cache>=1.1.0
+retry-requests>=1.0.0
+cdsapi>=0.6.0
+xarray>=2023.0.0
+cfgrib>=0.9.10

@@ -5,9 +5,8 @@ from gnews import GNews
 from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
 
-# Import local modules
-from app.schemas.news import NewsEntry
-#from data.db import create_news 
+from data.db import create_news
+from backend.app.schemas.news import NewsEntry
 
 # Initialization for the NLTK tokenizer
 nltk.download('punkt', quiet=True)
@@ -104,8 +103,17 @@ def run_scraper():
                 continue 
 
     # Modular Storage Calls
-    save_to_file(collected_entries)
-    # save_to_database(collected_entries)
+    #save_to_file(collected_entries)
+    #save_to_database(collected_entries)
+    
+def scraper_wrapper():
+    """This function acts as the bridge between the FastAPI scheduler and the scraper."""
+    print("Background Task: Starting news scrape...")
+    try:
+        run_scraper() 
+        print("Background Task: Scrape complete.")
+    except Exception as e:
+        print(f"Background Task Error: {e}")
 
 if __name__ == "__main__":
     run_scraper()

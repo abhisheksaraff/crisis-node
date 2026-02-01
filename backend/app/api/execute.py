@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.services.execute_service import execute_alert
+from backend.app.services.execute_service import execute_alert
 
 router = APIRouter()
 

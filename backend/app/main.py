@@ -2,9 +2,9 @@ import threading
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.background import BackgroundScheduler
-from app.services.scraping_service import scraper_wrapper
-from app.api.alerts import router as alerts_router
-from app.api.execute import router as execute_router
+from backend.app.services.scraping_service import scraper_wrapper
+from backend.app.api.alerts import router as alerts_router
+from backend.app.api.execute import router as execute_router
 
 app = FastAPI()
 scheduler = BackgroundScheduler()

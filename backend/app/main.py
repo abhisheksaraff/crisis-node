@@ -3,8 +3,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.background import BackgroundScheduler
 from backend.app.services.scraping_service import scraper_wrapper
-from backend.app.api.alerts import router as alerts_router
-from backend.app.api.execute import router as execute_router
+from backend.app.api.web_router import router as web_router
+from backend.app.api.agent_router import router as agent_router
 
 app = FastAPI()
 scheduler = BackgroundScheduler()
@@ -25,12 +25,11 @@ async def shutdown_event():
     scheduler.shutdown()
     print("Scheduler shut down.")
 
-# GET /alerts (Feed the map)
-# GET /plan/{alert_id} (Fetches the AIs generated Response)
-# POST /execute/{alert_id} (Triggers the action when user approves)
+# Human User Interface Routes
+app.include_router(web_router, prefix="/api", tags=["Web Dashboard"])
 
-app.include_router(alerts_router, prefix="/alerts")
-app.include_router(execute_router, prefix="/execute")
+# AI Agent Skill Routes
+app.include_router(agent_router, prefix="/agent", tags=["AI Orchestrator"])
 
 @app.exception_handler(404)
 async def custom_404(request: Request, exc):

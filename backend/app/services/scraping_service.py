@@ -71,7 +71,7 @@ def save_to_database(entries: List[NewsEntry]):
 
 def run_scraper():
     """Main execution logic for scraping news."""
-    google_news = GNews(language='en', period='12h', max_results=5)
+    google_news = GNews(language='en', period='12h', max_results=1)
     keywords = ['flood', 'earthquake', 'wildfire', 'cyclone']
     collected_entries = []
 

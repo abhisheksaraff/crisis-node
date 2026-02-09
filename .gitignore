@@ -2,6 +2,7 @@
 .env
 apikeys.env
 *.env
+.vscode/
 
 # Python specific
 venv/

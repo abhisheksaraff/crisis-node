@@ -19,7 +19,7 @@ def test_fetch_all():
     try:
         raw_data = read_news(limit=100)
     except Exception as e:
-        print(f"❌ Connection Error: {e}")
+        print(f"Connection Error: {e}")
         return
 
     if not raw_data:

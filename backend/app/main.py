@@ -6,7 +6,7 @@ from backend.app.services.scraping_service import scraper_wrapper
 from backend.app.api.web_router import router as web_router
 from backend.app.api.agent_router import router as agent_router
 
-app = FastAPI()
+app = FastAPI(title="Crisis Node AI")
 scheduler = BackgroundScheduler()
 
 def run_scheduled_scraper():

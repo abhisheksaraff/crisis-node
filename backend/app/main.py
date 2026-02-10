@@ -26,10 +26,10 @@ async def shutdown_event():
     print("Scheduler shut down.")
 
 # Human User Interface Routes
-app.include_router(user_router, prefix="/api", tags=["User Dashboard"])
+app.include_router(user_router, tags=["User Dashboard"])
 
 # AI Agent Skill Routes
-app.include_router(agent_router, prefix="/agent", tags=["AI Orchestrator"])
+app.include_router(agent_router, tags=["AI Orchestrator"])
 
 @app.exception_handler(404)
 async def custom_404(request: Request, exc):

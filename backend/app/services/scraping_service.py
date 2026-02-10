@@ -113,10 +113,10 @@ def scraper_wrapper():
     """This function acts as the bridge between the FastAPI scheduler and the scraper."""
     print("Background Task: Starting news scrape...")
     try:
-        run_scraper() 
+        #run_scraper() 
         print("Background Task: Scrape complete.")
     except Exception as e:
         print(f"Background Task Error: {e}")
-
+        
 if __name__ == "__main__":
     run_scraper()

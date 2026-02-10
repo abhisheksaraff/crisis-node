@@ -43,6 +43,32 @@ def read_alerts(limit: int = 50, active_only: bool = True):
         
     return query.order("created_at", desc=True).limit(limit).execute().data
 
+
+def get_alert_locations(active_only: bool = True) -> List[str]:
+    """
+    Returns a unique list of all location names currently in the alerts table.
+    Casting 'response.data' to List[Dict[str, Any]] to satisfy Mypy.
+    """
+    client = get_client()
+    
+    # We select only the 'name' field inside the location JSONB
+    query = client.table("alerts").select("location->>name")
+    
+    if active_only:
+        query = query.eq("is_active", True)
+        
+    response = query.execute()
+    
+    # FIX: Cast response.data to a list of dictionaries
+    data = cast(List[Dict[str, Any]], response.data)
+    
+    if data:
+        # Now Mypy knows 'item' is a Dict and can be indexed with a string
+        names = {item['name'] for item in data if item.get('name')}
+        return sorted(list(names))
+    
+    return []
+
 def read_alerts_by_location(location_name: str, active_only: bool = True):
     """
     Fetches alerts filtered by the 'name' inside the location JSONB object.
@@ -96,7 +122,7 @@ def add_alert_source(alert_id: str, new_source: dict):
     sources.append(new_source)
     return client.table("alerts").update({"sources": sources}).eq("id", alert_id).execute()
 
-def update_action_status(alert_id: str, task_index: int, is_done: bool):
+def update_alert_action_status(alert_id: str, task_index: int, is_done: bool):
     client = get_client()
     response = client.table("alerts").select("actions").eq("id", alert_id).single().execute()
     

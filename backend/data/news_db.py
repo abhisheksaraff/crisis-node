@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import hashlib
 import time
@@ -5,7 +6,7 @@ from typing import Optional, Dict, Any, List, cast
 from dotenv import load_dotenv, find_dotenv
 from supabase import create_client, Client
 from pydantic import BaseModel, Field
-from app.schemas.news import NewsEntry
+from backend.app.schemas.news import NewsEntry
 
 # Setup
 load_dotenv(find_dotenv())
@@ -18,20 +19,25 @@ def get_client() -> Client:
 def _generate_id(unique_string: str) -> str:
     """Generates a unique ID from a string (like a URL) to prevent duplicates."""
     return hashlib.md5(unique_string.encode("utf-8")).hexdigest()
-
+    
 def create_news(data: dict):
     """Saves news to 'news' table using exact NewsEntry model."""
     client = get_client()
     
     # Validate using the model to ensure strict adherence to your schema
     entry = NewsEntry(**data)
-    payload = entry.model_dump()
     
     # Generate the primary key ID from the link
-    payload["id"] = _generate_id(payload["link"])
+    payload = entry.model_dump()
 
     try:
-        return client.table("news").upsert(payload).execute()
+        # This tells Supabase: "If the 'link' already exists, do nothing."
+        return (
+            client.table("news")
+            .upsert(payload, on_conflict="link", ignore_duplicates=True)
+            .execute()
+        )
+        
     except Exception as e:
         return {"error": str(e)}
 
@@ -73,6 +79,28 @@ def update_news_location(news_id: str, location_name: str, lat: float, lon: floa
         return (
             client.table("news")
             .update(location_payload)
+            .eq("id", news_id)
+            .execute()
+        )
+    except Exception as e:
+        return {"error": str(e)}
+
+def update_news_location_type(news_id: str, news_type: str, location_name: str, lat: float, lon: float):
+    client = get_client()
+    
+    update_payload: Dict[str, Any] = {
+        "type": news_type,
+        "location": {
+            "name": location_name,
+            "lat": lat,
+            "lon": lon
+        },
+    }
+    
+    try:
+        return (
+            client.table("news")
+            .update(update_payload)
             .eq("id", news_id)
             .execute()
         )

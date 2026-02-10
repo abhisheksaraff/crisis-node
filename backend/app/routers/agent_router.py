@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import List, Dict, Any
-from backend.app.schemas.alerts import AlertEntry, AlertSource
-from backend.app.services.agent_service import AgentService
+from app.schemas.alerts import AlertEntry, AlertSource
+from app.services.agent_service import AgentService
 
 router = APIRouter(prefix="/agent", tags=["AI Agent Operations"])
 service = AgentService()

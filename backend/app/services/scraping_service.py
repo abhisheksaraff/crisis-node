@@ -6,8 +6,8 @@ from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
 
 # Updated import path to match your new project structure
-from backend.db.news_db import create_news
-from backend.app.schemas.news import NewsEntry
+from app.db.news_db import create_news
+from app.schemas.news import NewsEntry
 
 # Initialization for the NLTK tokenizer
 nltk.download('punkt', quiet=True)

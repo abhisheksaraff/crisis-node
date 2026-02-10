@@ -7,7 +7,7 @@ from dotenv import load_dotenv, find_dotenv
 from postgrest.exceptions import APIError
 from supabase import create_client, Client
 from pydantic import BaseModel, Field
-from backend.app.schemas.news import NewsEntry
+from app.schemas.news import NewsEntry
 
 # Setup
 load_dotenv(find_dotenv())

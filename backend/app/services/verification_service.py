@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from backend.data.news_db import update_news_location_type, read_news
+from app.db.news_db import update_news_location_type, read_news
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))

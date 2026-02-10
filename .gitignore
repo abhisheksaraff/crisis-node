@@ -16,6 +16,7 @@ node_modules/
 # OS specific
 .DS_Store
 
-# Test files (If you want to keep your tests local only)
-test_news.py
-test_alerts.py
+# Docker / n8n
+node_modules/
+.n8n/
+*.log

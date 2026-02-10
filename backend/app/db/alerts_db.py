@@ -6,7 +6,7 @@ from dotenv import load_dotenv, find_dotenv
 from supabase import create_client, Client
 from pydantic import BaseModel
 import json
-from backend.app.schemas.alerts import AlertEntry
+from app.schemas.alerts import AlertEntry
 
 # Setup
 load_dotenv(find_dotenv())

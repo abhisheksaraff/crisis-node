@@ -1,8 +1,8 @@
 import json
 from typing import List, Dict, Any, Optional, cast
-from backend.app.schemas.alerts import AlertEntry, AlertSource, AlertAction
-from backend.db.news_db import *
-from backend.db.alerts_db import *
+from app.schemas.alerts import AlertEntry, AlertSource, AlertAction
+from app.db import *
+from app.db.alerts_db import *
 
 class AgentService:
     # --- PHASE 1: DISCOVERY ---

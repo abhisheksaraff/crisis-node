@@ -5,7 +5,8 @@ from gnews import GNews
 from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
 
-from data.db import create_news
+# Updated import path to match your new project structure
+from backend.db.news_db import create_news
 from backend.app.schemas.news import NewsEntry
 
 # Initialization for the NLTK tokenizer
@@ -55,17 +56,19 @@ def save_to_file(entries: List[NewsEntry], filename: str = "news.json"):
         print(f"File Save Error: {e}")
 
 def save_to_database(entries: List[NewsEntry]):
-    """Iterates through entries and saves each to Cloudant DB via db.py."""
+    """Iterates through entries and saves each to Supabase via news_db.py."""
     count = 0
     for entry in entries:
         try:
-            # Convert Pydantic object to dict for Cloudant
+            # Convert Pydantic object to dict for Supabase
             res = create_news(entry.model_dump())
-            if res and ("ok" in res or "id" in res):
+            
+            # Supabase-py response check: typically hasattr(res, 'data') or checking if it returned a list
+            if res and hasattr(res, 'data') and res.data:
                 count += 1
         except Exception as e:
             print(f"DB Save Error for {entry.title[:30]}: {e}")
-    print(f"Successfully synced {count} new articles to Cloudant.")
+    print(f"Successfully synced {count} new articles to Supabase.")
 
 # --- 3. CORE LOGIC ---
 

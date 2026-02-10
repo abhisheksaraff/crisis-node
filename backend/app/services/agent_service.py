@@ -1,44 +1,61 @@
-import sys, time
-from pathlib import Path
+import json
+from typing import List, Dict, Any, Optional, cast
+from backend.app.schemas.alerts import AlertEntry, AlertSource, AlertAction
+from backend.data.news_db import *
+from backend.data.alerts_db import *
 
-# Move up to the crisis-node root
-root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(root))
+class AgentService:
+    # --- PHASE 1: DISCOVERY ---
+    def get_agent_context(self) -> Dict[str, List[str]]:
+        """Provides the agent with a high-level view of pending work."""
+        return {
+            "locations_with_news": get_news_locations(),
+            "active_alert_locations": get_alert_locations(active_only=True)
+        }
 
-# Add the backend folder to find schemas
-sys.path.insert(0, str(root / "backend"))
+    # --- PHASE 2: TRIAGE & ANALYSIS ---
+    def prepare_location_data(self, location_name: str) -> Dict[str, Any]:
+        """Gathers all evidence and history for a specific location."""
+        return {
+            "new_news": read_news_by_location(location_name),
+            "existing_alerts": read_alerts_by_location(location_name, active_only=True),
+            "recent_history": read_alerts_by_location(location_name, active_only=False)[:5]
+        }
 
-from data.db import *
+    # --- PHASE 3: EXECUTION ---
+    def process_new_alert(self, news_id: str, alert_data: Dict[str, Any]):
+        """
+        Validates output against AlertEntry schema and creates a new row.
+        Then marks the source news as processed.
+        """
+        # 1. Validation check
+        entry = AlertEntry(**alert_data)
+        
+        # 2. Save to DB (Pydantic handles UUID/Datetime serialization)
+        result = create_alert(entry.model_dump(exclude_none=True))
+        
+        # 3. Cleanup
+        mark_news_read(news_id)
+        return result
 
-def get_pending_news(limit: int = 10):
-    """Specific helper to find news that hasn't been processed."""
-    return read_news(limit=limit, unread_only=True)
+    def update_existing_incident(self, alert_id: str, news_id: str, source_data: Dict[str, Any]):
+        """
+        Appends new evidence to an existing alert and cleans up news entry.
+        """
+        # Validate source schema
+        new_source = AlertSource(**source_data)
+        
+        # Add to alert
+        result = add_alert_source(alert_id, new_source.model_dump())
+        
+        # Cleanup
+        mark_news_read(news_id)
+        return result
 
-async def process_pending_batch():
-    """Iterates through unread news and enriches them."""
-    # 1. Fetch a small batch of work
-    pending_items = read_news(limit= 5, unread_only= True)
-    results = []
+    def sync_action_status(self, alert_id: str, task_index: int, is_done: bool):
+        """Standardizes action updates for the agent."""
+        return update_alert_action_status(alert_id, task_index, is_done)
 
-    if not pending_items:
-        return {"status": "idle", "message": "No news to process"}
-
-    for item in pending_items:
-        try:
-            # logic for watsonx.ai extraction
-            # location = call_watsonx_ai(item['text'])
-            location = "Extracted Location" # Placeholder
-            
-            # Update the specific document
-            update_news(item['_id'], {
-                "location": location,
-                "is_read": True, # Mark as processed
-                "status": "enriched"
-            })
-            
-            results.append({"id": item['_id'], "status": "success"})
-            
-        except Exception as e:
-            results.append({"id": item['_id'], "status": "failed", "error": str(e)})
-
-    return {"processed_count": len(results), "details": results}
+    def resolve_alert(self, alert_id: str):
+        """Finalizes an alert once the threat has passed."""
+        return mark_alert_done(alert_id)

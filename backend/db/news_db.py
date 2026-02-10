@@ -4,6 +4,7 @@ import hashlib
 import time
 from typing import Optional, Dict, Any, List, cast
 from dotenv import load_dotenv, find_dotenv
+from postgrest.exceptions import APIError
 from supabase import create_client, Client
 from pydantic import BaseModel, Field
 from backend.app.schemas.news import NewsEntry
@@ -52,19 +53,18 @@ def read_news(limit: int = 100, unread_only: bool = True):
     return query.order("timestamp", desc=True).limit(limit).execute().data
 
 def get_news_locations() -> List[str]:
-    """Fetches all unique location names from the news table."""
+    """Fetches all unique location names from the news JSONB field."""
     client = get_client()
-    response = client.table("news").select("location_name").execute()
     
-    # 1. Cast response.data to a list of dictionaries
-    # This resolves the "not indexable" and "Sequence" errors
+    response = client.table("news").select("location").execute()
+    
     data = cast(List[Dict[str, Any]], response.data)
     
-    # Extract names and use set() to get unique values
+    # Extract the "name" field from inside the location JSONB object
     locations = {
-        item["location_name"] 
+        item["location"]["name"] 
         for item in data 
-        if item.get("location_name")
+        if item.get("location") and isinstance(item["location"], dict) and "name" in item["location"]
     }
     
     return sorted(list(locations))
@@ -72,15 +72,22 @@ def get_news_locations() -> List[str]:
 def read_news_by_location(location_name: str, limit: int = 50):
     """Fetches news articles for a specific location."""
     client = get_client()
-    return (
-        client.table("news")
-        .select("*")
-        .eq("location_name", location_name)
-        .order("timestamp", desc=True)
-        .limit(limit)
-        .execute()
-        .data
-    )
+    try:
+        return (
+            client.table("news")
+            .select("*")
+            .eq("location->>name", location_name) 
+            .execute()
+            .data
+        )
+    except APIError as e:
+        # This catches "Column not found" or "Permission denied"
+        print(f"Supabase/Postgres Error: {e.message} (Code: {e.code})")
+        return []
+    except Exception as e:
+        # This catches "No internet" or "Python syntax error"
+        print(f"General System Error: {e}")
+        return []
 
 def update_news(news_id: str, update_data: dict):
     """Updates a specific row in 'news' table with Mypy type safety."""

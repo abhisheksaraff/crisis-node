@@ -1,10 +1,11 @@
+from __future__ import annotations
 import os
 from typing import Optional, Dict, Any, List, cast
 from dotenv import load_dotenv, find_dotenv
 from supabase import create_client, Client
 from pydantic import BaseModel
 import json
-from app.schemas.alerts import AlertEntry 
+from backend.app.schemas.alerts import AlertEntry
 
 # Setup
 load_dotenv(find_dotenv())

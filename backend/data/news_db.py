@@ -51,6 +51,37 @@ def read_news(limit: int = 100, unread_only: bool = True):
         
     return query.order("timestamp", desc=True).limit(limit).execute().data
 
+def get_news_locations() -> List[str]:
+    """Fetches all unique location names from the news table."""
+    client = get_client()
+    response = client.table("news").select("location_name").execute()
+    
+    # 1. Cast response.data to a list of dictionaries
+    # This resolves the "not indexable" and "Sequence" errors
+    data = cast(List[Dict[str, Any]], response.data)
+    
+    # Extract names and use set() to get unique values
+    locations = {
+        item["location_name"] 
+        for item in data 
+        if item.get("location_name")
+    }
+    
+    return sorted(list(locations))
+
+def read_news_by_location(location_name: str, limit: int = 50):
+    """Fetches news articles for a specific location."""
+    client = get_client()
+    return (
+        client.table("news")
+        .select("*")
+        .eq("location_name", location_name)
+        .order("timestamp", desc=True)
+        .limit(limit)
+        .execute()
+        .data
+    )
+
 def update_news(news_id: str, update_data: dict):
     """Updates a specific row in 'news' table with Mypy type safety."""
     client = get_client()

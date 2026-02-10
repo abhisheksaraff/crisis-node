@@ -3,8 +3,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.background import BackgroundScheduler
 from backend.app.services.scraping_service import scraper_wrapper
-from backend.app.api.web_router import router as web_router
-from backend.app.api.agent_router import router as agent_router
+from backend.app.routers.user_router import router as user_router
+from backend.app.routers.agent_router import router as agent_router
 
 app = FastAPI(title="Crisis Node AI")
 scheduler = BackgroundScheduler()
@@ -12,7 +12,7 @@ scheduler = BackgroundScheduler()
 def run_scheduled_scraper():
     scraper_wrapper()
 
-scheduler.add_job(scraper_wrapper, 'interval', minutes=5)
+scheduler.add_job(scraper_wrapper, 'interval', hours=24)
 
 @app.on_event("startup")
 async def startup_event():
@@ -26,7 +26,7 @@ async def shutdown_event():
     print("Scheduler shut down.")
 
 # Human User Interface Routes
-app.include_router(web_router, prefix="/api", tags=["Web Dashboard"])
+app.include_router(user_router, prefix="/api", tags=["User Dashboard"])
 
 # AI Agent Skill Routes
 app.include_router(agent_router, prefix="/agent", tags=["AI Orchestrator"])

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 from typing import Optional, Dict, Any, List, cast
+from postgrest.exceptions import APIError
 from dotenv import load_dotenv, find_dotenv
 from supabase import create_client, Client
 from pydantic import BaseModel
@@ -50,42 +51,42 @@ def get_alert_locations(active_only: bool = True) -> List[str]:
     Casting 'response.data' to List[Dict[str, Any]] to satisfy Mypy.
     """
     client = get_client()
-    
-    # We select only the 'name' field inside the location JSONB
     query = client.table("alerts").select("location->>name")
     
     if active_only:
         query = query.eq("is_active", True)
         
     response = query.execute()
-    
-    # FIX: Cast response.data to a list of dictionaries
     data = cast(List[Dict[str, Any]], response.data)
     
-    if data:
-        # Now Mypy knows 'item' is a Dict and can be indexed with a string
-        names = {item['name'] for item in data if item.get('name')}
-        return sorted(list(names))
-    
-    return []
+    names = {item['name'] for item in data if item.get('name')}
+    return sorted(list(names))
 
 def read_alerts_by_location(location_name: str, active_only: bool = True):
     """
     Fetches alerts filtered by the 'name' inside the location JSONB object.
-    Example: read_alerts_by_location("Great Falls, MT")
+    Gracefully handles database errors to prevent server crashes.
     """
     client = get_client()
     
-    # Use the arrow operator ->> to access the text value inside the JSONB column
+    # 1. Target the 'name' key inside the 'location' JSONB column
+    # ->> extracts the JSON value as text for comparison
     query = client.table("alerts").select("*").eq("location->>name", location_name)
     
     if active_only:
         query = query.eq("is_active", True)
         
     try:
-        return query.order("created_at", desc=True).execute().data
+        # 2. Execute and return only the .data list
+        response = query.order("created_at", desc=True).execute()
+        return response.data
+    except APIError as e:
+        # Specifically catches Supabase/Postgres errors (like missing columns)
+        print(f"Supabase API Error for location '{location_name}': {e.message}")
+        return []
     except Exception as e:
-        print(f"Error fetching alerts for location {location_name}: {e}")
+        # Catches connection issues or unexpected Python errors
+        print(f"Unexpected error in read_alerts_by_location: {e}")
         return []
 
 def update_alert(alert_id: str, update_data: dict):
@@ -174,5 +175,4 @@ def mark_alert_done(alert_id: str):
 def delete_all_alerts():
     """Wipes the 'alerts' table."""
     client = get_client()
-    # Using a filter that is always true for UUIDs to clear the table
-    return client.table("alerts").delete().neq("event", "none").execute()
+    return client.table("alerts").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()

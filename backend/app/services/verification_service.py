@@ -21,7 +21,7 @@ def build_analysis_prompt(news_items: List[Dict[str, Any]]) -> str:
             "id": n["id"],
             "event": n.get("event", "unknown"),
             "description": n.get("description", ""),
-            "content": (n.get("content") or "")[:1500],  # Capped for token efficiency
+            "content": (n.get("content") or "")[:1500],
             "link": n.get("link", "")
         } for n in news_items
     ]

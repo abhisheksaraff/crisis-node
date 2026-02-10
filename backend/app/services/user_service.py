@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from backend.db.alerts_db import (
+from app.db.alerts_db import (
     read_alerts,
     add_custom_action,
     update_alert_action_status,

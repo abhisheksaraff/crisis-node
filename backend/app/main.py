@@ -2,9 +2,9 @@ import threading
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.background import BackgroundScheduler
-from backend.app.services.scraping_service import scraper_wrapper
-from backend.app.routers.user_router import router as user_router
-from backend.app.routers.agent_router import router as agent_router
+from app.services.scraping_service import scraper_wrapper
+from app.routers.user_router import router as user_router
+from app.routers.agent_router import router as agent_router
 
 app = FastAPI(title="Crisis Node AI")
 scheduler = BackgroundScheduler()

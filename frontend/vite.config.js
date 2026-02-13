@@ -1,15 +1,14 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    host: true, // Listen on all local IPs
+    port: 5173,
+    strictPort: true,
+    watch: {
+      usePolling: true, // Required for HMR to work in Docker/Network volumes
+    },
   },
-  test: {
-    environment: "jsdom",
-    setupFiles: "./src/setupTests.js",
-    globals: true,
-    css: true,
-  },
-});
+})

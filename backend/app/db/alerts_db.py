@@ -16,21 +16,31 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 def get_client() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# def create_alert(data: dict):
+#     """Saves a verified alert to the 'alerts' table."""
+#     client = get_client()
+    
+#     # 1. Validate using the model
+#     entry = AlertEntry(**data)
+    
+#     # 2. Convert to JSON-compatible dict (handles UUID and Datetime)
+#     # We use json.loads(entry.model_dump_json()) to ensure 
+#     # UUIDs and Datetimes are converted to strings.
+#     payload = json.loads(entry.model_dump_json(exclude_none=True))
+
+#     try:
+#         # Note: We do NOT generate an ID here; Supabase handles the UUID.
+#         return client.table("alerts").insert(payload).execute()
+#     except Exception as e:
+#         return {"error": str(e)}
+
 def create_alert(data: dict):
-    """Saves a verified alert to the 'alerts' table."""
+    """Saves a verified alert to the 'alerts' table without model validation."""
     client = get_client()
     
-    # 1. Validate using the model
-    entry = AlertEntry(**data)
-    
-    # 2. Convert to JSON-compatible dict (handles UUID and Datetime)
-    # We use json.loads(entry.model_dump_json()) to ensure 
-    # UUIDs and Datetimes are converted to strings.
-    payload = json.loads(entry.model_dump_json(exclude_none=True))
-
     try:
         # Note: We do NOT generate an ID here; Supabase handles the UUID.
-        return client.table("alerts").insert(payload).execute()
+        return client.table("alerts").insert(data).execute()
     except Exception as e:
         return {"error": str(e)}
 
@@ -97,7 +107,7 @@ def update_alert(alert_id: str, update_data: dict):
         return (
             client.table("alerts")
             .update(safe_data)
-            .eq("id", alert_id)
+            .eq("alert_id", alert_id)
             .execute()
         )
     except Exception as e:
@@ -107,7 +117,7 @@ def add_alert_source(alert_id: str, new_source: dict):
     client = get_client()
     
     # Execute the query
-    response = client.table("alerts").select("sources").eq("id", alert_id).single().execute()
+    response = client.table("alerts").select("sources").eq("alert_id", alert_id).single().execute()
     
     # 1. Cast the data to a dictionary to fix the .get() error
     # We know .single() returns a dict if successful
@@ -121,11 +131,11 @@ def add_alert_source(alert_id: str, new_source: dict):
     
     # 3. Modify and Update
     sources.append(new_source)
-    return client.table("alerts").update({"sources": sources}).eq("id", alert_id).execute()
+    return client.table("alerts").update({"sources": sources}).eq("alert_id", alert_id).execute()
 
 def update_alert_action_status(alert_id: str, task_index: int, is_done: bool):
     client = get_client()
-    response = client.table("alerts").select("actions").eq("id", alert_id).single().execute()
+    response = client.table("alerts").select("actions").eq("alert_id", alert_id).single().execute()
     
     data = cast(Dict[str, Any], response.data)
     if not data:
@@ -135,7 +145,7 @@ def update_alert_action_status(alert_id: str, task_index: int, is_done: bool):
     
     if 0 <= task_index < len(actions):
         actions[task_index]["done"] = is_done
-        return client.table("alerts").update({"actions": actions}).eq("id", alert_id).execute()
+        return client.table("alerts").update({"actions": actions}).eq("alert_id", alert_id).execute()
         
     return {"error": "Index out of range"}
 
@@ -147,7 +157,7 @@ def add_custom_action(alert_id: str, task_text: str):
     client = get_client()
     
     # 1. Fetch current actions
-    response = client.table("alerts").select("actions").eq("id", alert_id).single().execute()
+    response = client.table("alerts").select("actions").eq("alert_id", alert_id).single().execute()
     
     # 2. Cast response data to dict to enable .get()
     data = cast(Dict[str, Any], response.data)
@@ -163,16 +173,16 @@ def add_custom_action(alert_id: str, task_text: str):
     return (
         client.table("alerts")
         .update({"actions": actions})
-        .eq("id", alert_id)
+        .eq("alert_id", alert_id)
         .execute()
     )
 
 def mark_alert_done(alert_id: str):
     """Helper to deactivate an alert or mark it read."""
     client = get_client()
-    return client.table("alerts").update({"is_active": False, "is_read": True}).eq("id", alert_id).execute()
+    return client.table("alerts").update({"is_active": False, "is_read": True}).eq("alert_id", alert_id).execute()
 
 def delete_all_alerts():
     """Wipes the 'alerts' table."""
     client = get_client()
-    return client.table("alerts").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+    return client.table("alerts").delete().neq("alert_id", "00000000-0000-0000-0000-000000000000").execute()

@@ -21,24 +21,41 @@ def _generate_id(unique_string: str) -> str:
     """Generates a unique ID from a string (like a URL) to prevent duplicates."""
     return hashlib.md5(unique_string.encode("utf-8")).hexdigest()
     
+# def create_news(data: dict):
+#     """Saves news to 'news' table using exact NewsEntry model."""
+#     client = get_client()
+    
+#     # Validate using the model to ensure strict adherence to your schema
+#     entry = NewsEntry(**data)
+    
+#     # Generate the primary key ID from the link
+#     payload = entry.model_dump()
+
+#     try:
+#         # This tells Supabase: "If the 'link' already exists, do nothing."
+#         return (
+#             client.table("news")
+#             .upsert(payload, on_conflict="link", ignore_duplicates=True)
+#             .execute()
+#         )
+        
+#     except Exception as e:
+#         return {"error": str(e)}
+
 def create_news(data: dict):
-    """Saves news to 'news' table using exact NewsEntry model."""
+    """
+    Saves news to Supabase news_entries table.
+    Uses .upsert() to handle duplicates based on the ID automatically.
+    """
     client = get_client()
     
-    # Validate using the model to ensure strict adherence to your schema
-    entry = NewsEntry(**data)
-    
-    # Generate the primary key ID from the link
-    payload = entry.model_dump()
+    if "link" in data:
+        data["news_id"] = _generate_id(data["link"])
 
     try:
-        # This tells Supabase: "If the 'link' already exists, do nothing."
-        return (
-            client.table("news")
-            .upsert(payload, on_conflict="link", ignore_duplicates=True)
-            .execute()
-        )
-        
+        # upsert checks the primary key (id). 
+        # If it exists, it updates; if not, it inserts.
+        return client.table("news").upsert(data).execute()
     except Exception as e:
         return {"error": str(e)}
 
@@ -97,7 +114,7 @@ def update_news(news_id: str, update_data: dict):
         return (
             client.table("news")
             .update(safe_data)
-            .eq("id", news_id)
+            .eq("news_id", news_id)
             .execute()
         )
     except Exception as e:
@@ -117,7 +134,7 @@ def update_news_location(news_id: str, location_name: str, lat: float, lon: floa
         return (
             client.table("news")
             .update(location_payload)
-            .eq("id", news_id)
+            .eq("news_id", news_id)
             .execute()
         )
     except Exception as e:
@@ -126,6 +143,7 @@ def update_news_location(news_id: str, location_name: str, lat: float, lon: floa
 def update_news_location_type(news_id: str, news_type: str, location_name: str, lat: float, lon: float):
     client = get_client()
     
+    # Start with your standard payload
     update_payload: Dict[str, Any] = {
         "type": news_type,
         "location": {
@@ -134,12 +152,16 @@ def update_news_location_type(news_id: str, news_type: str, location_name: str, 
             "lon": lon
         },
     }
+
+    # If it's a false alert, mark it as read automatically
+    if news_type == "false_alert":
+        update_payload["is_read"] = True
     
     try:
         return (
             client.table("news")
             .update(update_payload)
-            .eq("id", news_id)
+            .eq("news_id", news_id)
             .execute()
         )
     except Exception as e:
@@ -148,9 +170,14 @@ def update_news_location_type(news_id: str, news_type: str, location_name: str, 
 def mark_news_read(news_id: str):
     """Sets is_read = True in 'news' table."""
     client = get_client()
-    return client.table("news").update({"is_read": True}).eq("id", news_id).execute()
+    return client.table("news").update({"is_read": True}).eq("news_id", news_id).execute()
+
+def mark_all_news_read():
+    """Sets is_read = True for every row in the 'news' table."""
+    client = get_client()
+    return client.table("news").update({"is_read": True}).neq("is_read", True).execute()
 
 def delete_all_news():
     """Wipes the 'news' table."""
     client = get_client()
-    return client.table("news").delete().neq("id", "0").execute()
+    return client.table("news").delete().neq("news_id", "0").execute()

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 class AlertAction(BaseModel):
     task: str
@@ -13,12 +13,11 @@ class AlertSource(BaseModel):
     timestamp: Optional[str] = None
 
 class AlertEntry(BaseModel):
-    id: Optional[uuid.UUID] = None  # Supabase Generated
+    alert_id: Optional[uuid.UUID] = None  # Supabase Generated
     event: str
     title: str
     description: Optional[str] = None
     content: Optional[str] = None
-    link: str
     
     actions: List[AlertAction] = []
     sources: List[AlertSource] = []
@@ -32,8 +31,8 @@ class AlertEntry(BaseModel):
     is_read: bool = False
     is_active: bool = True
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
         from_attributes = True

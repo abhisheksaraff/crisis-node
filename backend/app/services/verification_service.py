@@ -18,7 +18,7 @@ def build_analysis_prompt(news_items: List[Dict[str, Any]]) -> str:
     # Preparing data with the exact fields requested
     lean_data = [
         {
-            "id": n["id"],
+            "news_id": n["news_id"],
             "event": n.get("event", "unknown"),
             "description": n.get("description", ""),
             "content": (n.get("content") or "")[:1500],
@@ -33,7 +33,7 @@ def build_analysis_prompt(news_items: List[Dict[str, Any]]) -> str:
     3. Extract location {{name, lat, lon}}.
     
     Return ONLY a JSON array of objects:
-    [{{"id": "...", "type": "...", "location": {{"name": "...", "lat": 0.0, "lon": 0.0}}}}]
+    [{{"news_id": "...", "type": "...", "location": {{"name": "...", "lat": 0.0, "lon": 0.0}}}}]
 
     DATA:
     {json.dumps(lean_data)}
@@ -78,7 +78,7 @@ async def process_batch_with_gemini(limit: int = 40):
         decisions = json.loads(raw_response)
         for d in decisions:
             update_news_location_type(
-                news_id=d["id"],
+                news_id=d["news_id"],
                 news_type=d["type"],
                 location_name=d["location"]["name"],
                 lat=d["location"]["lat"],
@@ -88,6 +88,20 @@ async def process_batch_with_gemini(limit: int = 40):
     except json.JSONDecodeError:
         print("AI response was not valid JSON.")
         return {"status": "error"}
+    
+def verification_wrapper(limit: int = 50):
+    """
+    It manages the event loop to run the async Gemini process.
+    """
+    print("--- Starting Gemini Verification Wrapper ---")
+    try:
+        # Runs the async process and waits for it to finish
+        result = asyncio.run(process_batch_with_gemini(limit=limit))
+        print(f"Verification Wrapper Finished: {result}")
+        return result
+    except Exception as e:
+        print(f"Verification Wrapper Failed: {e}")
+        return {"status": "error", "message": str(e)}
 
 # if __name__ == "__main__":
 #     asyncio.run(process_batch_with_gemini(limit=5))

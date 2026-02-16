@@ -4,8 +4,6 @@ from typing import List
 from gnews import GNews
 from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
-
-# Updated import path to match your new project structure
 from app.db.news_db import create_news
 from app.schemas.news import NewsEntry
 
@@ -63,7 +61,7 @@ def save_to_database(entries: List[NewsEntry]):
             # Convert Pydantic object to dict for Supabase
             res = create_news(entry.model_dump())
             
-            # Supabase-py response check: typically hasattr(res, 'data') or checking if it returned a list
+            # Supabase-py response check. Typically hasattr(res, 'data') or checking if it returned a list
             if res and hasattr(res, 'data') and res.data:
                 count += 1
         except Exception as e:
@@ -74,8 +72,8 @@ def save_to_database(entries: List[NewsEntry]):
 
 def run_scraper():
     """Main execution logic for scraping news."""
-    google_news = GNews(language='en', period='12h', max_results=1)
-    keywords = ['flood', 'earthquake', 'wildfire', 'cyclone']
+    google_news = GNews(language='en', period='24h', max_results=1)
+    keywords = ['flood', 'earthquake', 'wildfire', 'cyclone', "blizzard", "volcano"]
     collected_entries = []
 
     print("Starting disaster scrapers...")
@@ -107,13 +105,13 @@ def run_scraper():
 
     # Modular Storage Calls
     #save_to_file(collected_entries)
-    #save_to_database(collected_entries)
+    save_to_database(collected_entries)
     
 def scraper_wrapper():
     """This function acts as the bridge between the FastAPI scheduler and the scraper."""
     print("Background Task: Starting news scrape...")
     try:
-        #run_scraper() 
+        run_scraper() 
         print("Background Task: Scrape complete.")
     except Exception as e:
         print(f"Background Task Error: {e}")

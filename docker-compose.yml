@@ -1,12 +1,4 @@
 services:
-  backend:
-    build: ./backend
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
       
   frontend:
     build: ./frontend
@@ -17,47 +9,24 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=${VITE_API_URL}
     env_file:
       - .env
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
-  # orchestration:
-  #   image: docker.n8n.io/n8nio/n8n
-  #   container_name: n8n-main
-  #   restart: always
-  #   ports:
-  #     - "5678:5678"
-  #   environment:
-  #     - N8N_HOST=localhost
-  #     - N8N_PORT=5678
-  #     - N8N_PROTOCOL=http
-  #     - N8N_SECURE_COOKIE=false
-  #     - NODE_OPTIONS=--max-old-space-size=1024
-  #     - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
-  #     - N8N_BLOCK_SVG_AND_ENV_VARS_IN_FILENAMES=false
-  #     - BACKEND_URL=${BACKEND_URL}
-  #     # Runner Configuration
-  #     - N8N_RUNNERS_MODE=external
-  #     - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
-  #     - N8N_RUNNERS_AUTH_TOKEN=05ti/GEELH2szAGE4zstt5ggGLcgKstf
-  #     - N8N_NATIVE_PYTHON_RUNNER=true
-  #     - N8N_RUNNERS_BROKER_PORT=5679
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./orchestration/data:/home/node/.n8n
-
-  # n8n-runners:
-  #   image: docker.n8n.io/n8nio/runners
-  #   container_name: n8n-runners
-  #   restart: always
-  #   environment:
-  #     - N8N_RUNNERS_TASK_BROKER_URI=http://orchestration:5679
-  #     - N8N_RUNNERS_AUTH_TOKEN=05ti/GEELH2szAGE4zstt5ggGLcgKstf
-  #   depends_on:
-  #     - orchestration
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      orchestration:
+        condition: service_healthy
 
   orchestration:
     image: docker.n8n.io/n8nio/n8n
@@ -73,8 +42,15 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_BLOCK_SVG_AND_ENV_VARS_IN_FILENAMES=false
       - BACKEND_URL=${BACKEND_URL}
+      - WEBHOOK_URL=${ORCHESTRATION_URL_DOCKER}
     env_file:
       - .env
     volumes:
       - ./orchestration/data:/home/node/.n8n
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider http://localhost:5678/healthz || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

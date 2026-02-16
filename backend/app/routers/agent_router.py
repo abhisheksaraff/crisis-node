@@ -1,4 +1,5 @@
 import json
+import httpx
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
 from typing import List, Dict, Any
 from app.schemas.alerts import AlertEntry, AlertSource
@@ -58,29 +59,44 @@ async def get_location_triage(location: str):
 @router.post("/process-new")
 async def create_new_alert(alert_data: Any = Body(...)):
     """Endpoint for agent to create a brand-new verified alert."""
-    print(alert_data)
-    print(type(alert_data))
-    clean_data=json.dumps(alert_data)
-    print(clean_data)
-    print(type(clean_data))
+    print("process-new", alert_data)
     try:
         #clean_data = alert_data.model_dump(mode='json') 
-        result = service.process_new_alert(alert_data)
-        return {"status": "created", "result": result}
+        clean_data = service.process_new_alert(alert_data)
+        return {"status": "created", "result": clean_data}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 # --- 4. EXECUTION: UPDATE ---
 @router.post("/process-update")
-async def add_alert_source(alert_id: str, new_source: AlertSource):
+async def add_alert_source(alert_source: Any = Body(...)):
     """Endpoint for agent to add news to an existing alert."""
+    print("process-update", alert_source)
     try:
-        return service.add_alert_source(alert_id, new_source.model_dump(mode='json'))
+        #return service.add_alert_source(alert_id, new_source.model_dump(mode='json'))
+        # clean_data = service.add_alert_source(new_source)
+        # return service.add_alert_source(alert_id, clean_data)
+        alert_id = alert_source.get("alert_id")
+        new_source = alert_source.get("new_source")
+
+        # Use your service to clean the news data
+        # clean_data = service.process_new_alert(new_source)
+        
+        if isinstance(new_source, str):
+            try:
+                new_source = json.loads(new_source)
+            except json.JSONDecodeError:
+                pass
+        
+        return service.add_alert_source(alert_id, new_source)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 # --- 5. MANAGEMENT ---
 @router.post("/resolve")
-async def resolve_incident(alert_id: str):
+async def resolve_incident(alert_id: str = Body(..., embed=True)):
     """Finalizes an incident (marks inactive)."""
-    return service.resolve_alert(alert_id)
+    try:
+        return service.resolve_alert(alert_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

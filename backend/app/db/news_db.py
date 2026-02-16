@@ -69,19 +69,47 @@ def read_news(limit: int = 100, unread_only: bool = True):
         
     return query.order("timestamp", desc=True).limit(limit).execute().data
 
-def get_news_locations() -> List[str]:
-    """Fetches all unique location names from the news JSONB field."""
+# def get_news_locations() -> List[str]:
+#     """Fetches all unique location names from the news JSONB field."""
+#     client = get_client()
+    
+#     response = client.table("news").select("location").execute()
+    
+#     data = cast(List[Dict[str, Any]], response.data)
+    
+#     # Extract the "name" field from inside the location JSONB object
+#     locations = {
+#         item["location"]["name"] 
+#         for item in data 
+#         if item.get("location") and isinstance(item["location"], dict) and "name" in item["location"]
+#     }
+    
+#     return sorted(list(locations))
+
+def get_news_locations(unread_only: bool = False) -> List[str]:
+    """
+    Fetches unique location names from the news JSONB field.
+    Optionally filters by unread status.
+    """
     client = get_client()
     
-    response = client.table("news").select("location").execute()
+    # Start the query selecting only the location column
+    query = client.table("news").select("location")
     
+    # Apply filter if unread_only is True
+    if unread_only:
+        query = query.eq("is_read", False)
+        
+    response = query.execute()
     data = cast(List[Dict[str, Any]], response.data)
     
     # Extract the "name" field from inside the location JSONB object
     locations = {
         item["location"]["name"] 
         for item in data 
-        if item.get("location") and isinstance(item["location"], dict) and "name" in item["location"]
+        if item.get("location") 
+        and isinstance(item["location"], dict) 
+        and "name" in item["location"]
     }
     
     return sorted(list(locations))

@@ -9,7 +9,7 @@ class AgentService:
     def get_agent_context(self) -> Dict[str, List[str]]:
         """Provides the agent with a high-level view of pending work."""
         return {
-            "location": get_news_locations(),
+            "location": get_news_locations(unread_only=True),
             "active_alert_locations": get_alert_locations(active_only=True)
         }
 
@@ -61,6 +61,14 @@ class AgentService:
         # are already stringified if necessary.
         result = create_alert(alert_data)
         
+        news_id = alert_data.get("news_id")
+        if news_id:
+            print(f"DEBUG: Alert created, marking news_id {news_id} as read.", flush=True)
+            mark_news_read(news_id) 
+        else:
+            print("DEBUG: Alert created but no news_id found in data to mark as read.", flush=True)
+            
+        
         return result
 
     def add_alert_source(self, alert_id: str, new_source: Dict[str, Any]):
@@ -69,12 +77,16 @@ class AgentService:
         """
         # Validate source schema
         # new_source = AlertSource(**source_data)
-        
-        # Add to alert
         result = add_alert_source(alert_id, new_source)
-        
+        # Add to alert
         # Cleanup
         #mark_news_read(news_id)
+        news_id = new_source.get("news_id")
+        if news_id:
+            print(f"DEBUG: Marking news {news_id} as read.", flush=True)
+            mark_news_read(news_id) # Ensure this function is imported
+        else:
+            print("DEBUG: No news_id found in source metadata; skipping cleanup.", flush=True)
         return result
 
     def sync_action_status(self, alert_id: str, task_index: int, is_done: bool):

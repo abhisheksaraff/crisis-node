@@ -20,27 +20,6 @@ def get_client() -> Client:
 def _generate_id(unique_string: str) -> str:
     """Generates a unique ID from a string (like a URL) to prevent duplicates."""
     return hashlib.md5(unique_string.encode("utf-8")).hexdigest()
-    
-# def create_news(data: dict):
-#     """Saves news to 'news' table using exact NewsEntry model."""
-#     client = get_client()
-    
-#     # Validate using the model to ensure strict adherence to your schema
-#     entry = NewsEntry(**data)
-    
-#     # Generate the primary key ID from the link
-#     payload = entry.model_dump()
-
-#     try:
-#         # This tells Supabase: "If the 'link' already exists, do nothing."
-#         return (
-#             client.table("news")
-#             .upsert(payload, on_conflict="link", ignore_duplicates=True)
-#             .execute()
-#         )
-        
-#     except Exception as e:
-#         return {"error": str(e)}
 
 def create_news(data: dict):
     """
@@ -68,23 +47,6 @@ def read_news(limit: int = 100, unread_only: bool = True):
         query = query.eq("is_read", False)
         
     return query.order("timestamp", desc=True).limit(limit).execute().data
-
-# def get_news_locations() -> List[str]:
-#     """Fetches all unique location names from the news JSONB field."""
-#     client = get_client()
-    
-#     response = client.table("news").select("location").execute()
-    
-#     data = cast(List[Dict[str, Any]], response.data)
-    
-#     # Extract the "name" field from inside the location JSONB object
-#     locations = {
-#         item["location"]["name"] 
-#         for item in data 
-#         if item.get("location") and isinstance(item["location"], dict) and "name" in item["location"]
-#     }
-    
-#     return sorted(list(locations))
 
 def get_news_locations(unread_only: bool = False) -> List[str]:
     """
@@ -171,7 +133,7 @@ def update_news_location(news_id: str, location_name: str, lat: float, lon: floa
 def update_news_location_type(news_id: str, news_type: str, location_name: str, lat: float, lon: float):
     client = get_client()
     
-    # Start with your standard payload
+    # Start with standard payload
     update_payload: Dict[str, Any] = {
         "type": news_type,
         "location": {

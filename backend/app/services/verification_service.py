@@ -59,36 +59,6 @@ async def call_gemini_api(prompt: str) -> Optional[str]:
         return None
 
 # --- FUNCTION 3: ORCHESTRATOR ---
-# async def process_batch_with_gemini(limit: int = 40):
-#     # 1. Get Data
-#     news = read_news(limit=limit, unread_only=True)
-#     if not news:
-#         return {"status": "idle"}
-
-#     # 2. Build Prompt
-#     prompt = build_analysis_prompt(news)
-    
-#     # 3. Call AI
-#     raw_response = await call_gemini_api(prompt)
-#     if not raw_response:
-#         return {"status": "error", "message": "API error or 429 quota hit"}
-
-#     # 4. Parse & Update DB
-#     try:
-#         decisions = json.loads(raw_response)
-#         for d in decisions:
-#             update_news_location_type(
-#                 news_id=d["news_id"],
-#                 news_type=d["type"],
-#                 location_name=d["location"]["name"],
-#                 lat=d["location"]["lat"],
-#                 lon=d["location"]["lon"]
-#             )
-#         return {"status": "success", "count": len(decisions)}
-#     except json.JSONDecodeError:
-#         print("AI response was not valid JSON.")
-#         return {"status": "error"}
-# --- FUNCTION 3: ORCHESTRATOR ---
 async def process_batch_with_gemini(limit: int = 50):
     # 1. Get All Unread Data
     all_news = read_news(limit=limit, unread_only=True)
@@ -156,5 +126,5 @@ def verification_wrapper(limit: int = 50):
         print(f"Verification Wrapper Failed: {e}")
         return {"status": "error", "message": str(e)}
 
-# if __name__ == "__main__":
-#     asyncio.run(process_batch_with_gemini(limit=5))
+if __name__ == "__main__":
+    asyncio.run(process_batch_with_gemini(limit=5))

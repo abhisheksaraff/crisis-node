@@ -1,12 +1,14 @@
 import os
+import asyncio
 import threading
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.db.db import run_db_init
-from app.db.news_db import delete_all_news, mark_all_news_read
+from app.db.news_db import delete_all_news
 from app.services.scraping_service import scraper_wrapper
 from app.services.verification_service import verification_wrapper
+from app.services.orchestration_service import trigger_orchestration_workflow
 from app.routers.user_router import router as user_router
 from app.routers.agent_router import router as agent_router
 
@@ -19,7 +21,7 @@ def run_crisis_pipeline():
     run_delete = os.getenv("ENABLE_DELETE", "True").lower() == "true"
     run_scraper = os.getenv("ENABLE_SCRAPER", "True").lower() == "true"
     run_verify = os.getenv("ENABLE_VERIFICATION", "True").lower() == "true"
-    run_mark_news_read = os.getenv("ENABLE_MARK_NEWS_READ", "True").lower() == "true"
+    run_orchestration = os.getenv("ENABLE_ORCHESTRATION", "True").lower() == "true"
 
     print(f"--- Pipeline Config: Delete={run_delete}, Scrape={run_scraper}, Verify={run_verify} ---")
     
@@ -35,12 +37,12 @@ def run_crisis_pipeline():
             scraper_wrapper()
         
         if run_verify:
-            print("Step 3: Running Gemini Verification...")
+            print("Step 3: Running News Verification...")
             verification_wrapper(limit=50)
-        
-        if run_mark_news_read:
-            print("Step 4: Marking all news read...")    
-            mark_all_news_read()
+            
+        if run_orchestration:
+            print("Step 4: Running Orchestration Workflow...")
+            asyncio.run(trigger_orchestration_workflow())
             
         print("--- Pipeline Cycle Complete ---")
     except Exception as e:

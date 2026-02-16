@@ -1,12 +1,9 @@
 from __future__ import annotations
 import os
-from typing import Optional, Dict, Any, List, cast
+from typing import Dict, Any, List, cast
 from postgrest.exceptions import APIError
 from dotenv import load_dotenv, find_dotenv
 from supabase import create_client, Client
-from pydantic import BaseModel
-import json
-from app.schemas.alerts import AlertEntry
 
 # Setup
 load_dotenv(find_dotenv())
@@ -16,30 +13,12 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 def get_client() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# def create_alert(data: dict):
-#     """Saves a verified alert to the 'alerts' table."""
-#     client = get_client()
-    
-#     # 1. Validate using the model
-#     entry = AlertEntry(**data)
-    
-#     # 2. Convert to JSON-compatible dict (handles UUID and Datetime)
-#     # We use json.loads(entry.model_dump_json()) to ensure 
-#     # UUIDs and Datetimes are converted to strings.
-#     payload = json.loads(entry.model_dump_json(exclude_none=True))
-
-#     try:
-#         # Note: We do NOT generate an ID here; Supabase handles the UUID.
-#         return client.table("alerts").insert(payload).execute()
-#     except Exception as e:
-#         return {"error": str(e)}
-
 def create_alert(data: dict):
     """Saves a verified alert to the 'alerts' table without model validation."""
     client = get_client()
     
     try:
-        # Note: We do NOT generate an ID here; Supabase handles the UUID.
+        # Note: We do NOT generate an ID here, Supabase handles the UUID.
         return client.table("alerts").insert(data).execute()
     except Exception as e:
         return {"error": str(e)}

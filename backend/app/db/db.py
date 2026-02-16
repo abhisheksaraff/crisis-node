@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_URL = os.getenv("SUPABASE_URL") 
+DB_URL = os.getenv("SUPABASE_CONNECTION_STRING")
 
 def run_db_init():
     """

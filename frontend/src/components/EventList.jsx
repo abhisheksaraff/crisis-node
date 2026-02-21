@@ -25,7 +25,6 @@ export default function EventList({ events, selectedId, onSelect }) {
             <span className={`badge ${event.type.toLowerCase()}`}>
               {event.type}
             </span>
-            {/* <span>{event.confidence}% confidence</span> */}
           </div>
         </button>
       ))}

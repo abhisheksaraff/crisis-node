@@ -35,20 +35,6 @@ export const getEvents = async () => {
   return normalizeEvents(data);
 };
 
-// export const getPlan = async (eventId) => {
-//   const response = await fetchWithTimeout(`${API_BASE}/events/${eventId}/plan`);
-//   if (!response.ok) {
-//     throw new Error(`Plan request failed: ${response.status}`);
-//   }
-
-//   const contentType = response.headers.get("content-type") || "";
-//   if (contentType.includes("application/json")) {
-//     return response.json();
-//   }
-
-//   return response.text();
-// };
-
 export const updateTaskStatus = async (alertId, index, done) => {
   const url = `${API_BASE}/user/alerts/${alertId}/actions/${index}?done=${done}`;
   const response = await fetchWithTimeout(url, {

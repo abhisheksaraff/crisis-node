@@ -72,7 +72,6 @@ export default function MapView({ events, selectedEvent, onSelect }) {
               >
                 {event.type}
               </div>
-              <div>{/* {event.type} • {event.confidence}% confidence */}</div>
             </div>
           </Popup>
         </Marker>

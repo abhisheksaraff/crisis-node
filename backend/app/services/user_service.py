@@ -9,7 +9,7 @@ from app.db.alerts_db import (
 class UserService:
     def list_active_incidents(self) -> List[Dict[str, Any]]:
         """Web router calls this to get the main dashboard feed."""
-        return read_alerts(active_only=True)
+        return read_alerts(active_only=False)
 
     def add_user_defined_task(self, alert_id: str, task_text: str):
         """Web router calls this when user types a custom task in the UI."""

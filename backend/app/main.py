@@ -2,6 +2,7 @@ import os
 import asyncio
 import threading
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.db.db import run_db_init
@@ -15,7 +16,25 @@ from app.routers.agent_router import router as agent_router
 app = FastAPI(title="Crisis Node")
 scheduler = BackgroundScheduler()
 
-import os
+origins = [
+    os.getenv("FRONTEND_URL"),
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/health")
+def health_check():
+    """
+    Endpoint for Docker healthchecks.
+    Returns 200 OK when the FastAPI server is ready.
+    """
+    return {"status": "healthy", "service": "Crisis Node"}
 
 def run_crisis_pipeline():
     run_delete = os.getenv("ENABLE_DELETE", "True").lower() == "true"

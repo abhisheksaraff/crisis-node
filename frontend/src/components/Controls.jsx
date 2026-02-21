@@ -2,6 +2,7 @@ export default function Controls({
   filters,
   onFiltersChange,
   stats,
+  types,
   onRefresh,
   loading,
   autoRefresh,
@@ -11,19 +12,19 @@ export default function Controls({
 }) {
   return (
     <div className="controls">
+      {/* Dynamic Stat Grid */}
       <div className="stat-grid">
         <div className="stat">
           <strong>{stats.total}</strong>
           Total
         </div>
-        <div className="stat">
-          <strong>{stats.fireCount}</strong>
-          Fires
-        </div>
-        <div className="stat">
-          <strong>{stats.floodCount}</strong>
-          Floods
-        </div>
+        {/* Map through dynamic type counts if provided in stats */}
+        {Object.entries(stats.counts || {}).map(([type, count]) => (
+          <div className="stat" key={type}>
+            <strong>{count}</strong>
+            {type}s
+          </div>
+        ))}
       </div>
 
       <div className="control-row">
@@ -35,29 +36,13 @@ export default function Controls({
             onFiltersChange({ ...filters, type: event.target.value })
           }
         >
-          <option value="All">All</option>
-          <option value="Fire">Fire</option>
-          <option value="Flood">Flood</option>
+          {/* Map through the dynamic types array */}
+          {types.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
         </select>
-      </div>
-
-      <div className="control-row">
-        <label htmlFor="confidence-filter">
-          Minimum confidence: {filters.minConfidence}%
-        </label>
-        <input
-          id="confidence-filter"
-          type="range"
-          min="0"
-          max="100"
-          value={filters.minConfidence}
-          onChange={(event) =>
-            onFiltersChange({
-              ...filters,
-              minConfidence: Number(event.target.value),
-            })
-          }
-        />
       </div>
 
       <div className="control-row">
@@ -65,7 +50,7 @@ export default function Controls({
         <input
           id="search-filter"
           type="text"
-          placeholder="Title or source"
+          placeholder="Title, source, or location"
           value={filters.search}
           onChange={(event) =>
             onFiltersChange({ ...filters, search: event.target.value })
@@ -73,7 +58,7 @@ export default function Controls({
         />
       </div>
 
-      <div className="actions-row">
+      {/* <div className="actions-row">
         <button className="button" onClick={onRefresh} disabled={loading}>
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -81,14 +66,14 @@ export default function Controls({
           className="button secondary"
           type="button"
           onClick={() =>
-            onFiltersChange({ type: "All", minConfidence: 0, search: "" })
+            onFiltersChange({ type: "All", search: "" })
           }
         >
           Clear
         </button>
-      </div>
+      </div> */}
 
-      <div className="control-row">
+      {/* <div className="control-row">
         <label>Auto-refresh</label>
         <div className="actions-row">
           <label className="toggle">
@@ -110,7 +95,7 @@ export default function Controls({
             ))}
           </select>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -1,134 +1,215 @@
-import { useEffect, useRef, useState } from "react";
-import { getPlan } from "../lib/api";
+import { useEffect, useState } from "react";
 import { formatTimestamp } from "../lib/time";
 
-const fallbackPlanText =
-  "Plan unavailable. Prioritize life safety, verify evacuation routes, and coordinate local response teams while awaiting a full UN-style assessment.";
-
-const buildPlanState = (status, data, isFallback = false) => ({
-  status,
-  data,
-  isFallback,
-});
-
-export default function EventDetails({ event }) {
-  const [planState, setPlanState] = useState(buildPlanState("idle", null));
-  const planCache = useRef({});
+export default function EventDetails({ event, onUpdateEvent }) {
+  const [localActions, setLocalActions] = useState([]);
+  const [localActive, setLocalActive] = useState(true);
 
   useEffect(() => {
-    if (!event) return;
-    const cached = planCache.current[event.id];
-    if (cached) {
-      setPlanState(cached);
-      return;
+    if (event) {
+      setLocalActions(event.actions || []);
+      setLocalActive(event.is_active);
     }
-
-    setPlanState(buildPlanState("loading", null));
-
-    getPlan(event.id)
-      .then((data) => {
-        const next = buildPlanState("ready", data);
-        setPlanState(next);
-        planCache.current[event.id] = next;
-      })
-      .catch(() => {
-        const next = buildPlanState("unavailable", fallbackPlanText, true);
-        setPlanState(next);
-        planCache.current[event.id] = next;
-      });
   }, [event?.id]);
 
-  if (!event) {
-    return (
-      <div>
-        <div className="panel-title">Event Details</div>
-        <div className="event-meta">Select an event to see its response plan.</div>
-      </div>
-    );
-  }
+  if (!event) return <div className="panel-title">Select an event</div>;
 
-  const plan = planState.data;
-  const isPlanObject = plan && typeof plan === "object" && !Array.isArray(plan);
+  // COMPARISON LOGIC: Check if current local state differs from the original prop
+  const actionsChanged = JSON.stringify(localActions) !== JSON.stringify(event.actions || []);
+  const statusChanged = localActive !== event.is_active;
+  const hasChanges = actionsChanged || statusChanged;
+
+  const isLocked = event.is_active === false;
+
+  const handleToggleLocalAction = (index) => {
+    const updated = localActions.map((a, i) =>
+      i === index ? { ...a, done: !a.done } : a,
+    );
+    setLocalActions(updated);
+  };
+
+  const handleToggleActive = () => {
+    setLocalActive(!localActive);
+  };
+
+  const handlePushUpdates = () => {
+    onUpdateEvent(event.id, {
+      actions: localActions,
+      is_active: localActive,
+    });
+  };
 
   return (
-    <div>
-      <div className="panel-title">Event Details</div>
+    <div className="event-details">
+      <div className="panel-title">
+        Event Details{" "}
+        {isLocked && <span className="status-locked">(LOCKED/RESOLVED)</span>}
+      </div>
       <h3>{event.title}</h3>
+
       <div className="details-grid">
         <div className="detail-card">
-          <strong>{event.type}</strong>
-          <div>{event.confidence}% confidence</div>
+          <div>
+            <strong>Type</strong> {event.type}
+          </div>
+          <div>
+            <strong>Location</strong> {event.name}
+          </div>
         </div>
         <div className="detail-card">
-          <div>{event.source}</div>
-          <div>{formatTimestamp(event.timestamp)}</div>
+          <strong>Source</strong>
+          <div>
+            <a
+              href={event.source[0]?.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="source-link"
+            >
+              {event.source[0]?.name || "View Source"}
+            </a>
+          </div>
         </div>
         <div className="detail-card">
-          <div>Lat {event.lat.toFixed(3)}</div>
-          <div>Lng {event.lng.toFixed(3)}</div>
-        </div>
-        <div className="detail-card">
-          <div>ID {event.id}</div>
-          <div>{event.details || "No additional notes."}</div>
+          <strong>Time</strong> {formatTimestamp(event.timestamp)}
         </div>
       </div>
 
-      <div className="plan-section">
-        <div className="plan-title">Response Plan</div>
-        {planState.status === "loading" && <div>Loading plan...</div>}
-        {planState.isFallback && (
-          <div className="plan-unavailable">Plan unavailable</div>
-        )}
+      <div style={{ marginTop: "10px" }}>{event.details || "No Details Found"}</div>
+      <br />
 
-        {planState.status !== "loading" && (
-          <>
-            {isPlanObject ? (
-              <>
-                {plan.summary && <p>{plan.summary}</p>}
-                {Array.isArray(plan.actions) && plan.actions.length > 0 && (
-                  <div>
-                    <strong>Actions</strong>
-                    <ul className="plan-list">
-                      {plan.actions.map((action, index) => (
-                        <li key={`${action}-${index}`}>{action}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {Array.isArray(plan.resources) && plan.resources.length > 0 && (
-                  <div>
-                    <strong>Resources</strong>
-                    <div className="plan-resources">
-                      {plan.resources.map((resource, index) => (
-                        <div className="plan-resource" key={`${resource.item}-${index}`}>
-                          <span>{resource.item}</span>
-                          <span>{resource.qty}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {Array.isArray(plan.risks) && plan.risks.length > 0 && (
-                  <div>
-                    <strong>Risks</strong>
-                    <ul className="plan-list">
-                      {plan.risks.map((risk, index) => (
-                        <li key={`${risk}-${index}`}>{risk}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {Number.isFinite(plan.confidence) && (
-                  <div>
-                    <strong>Plan confidence:</strong> {plan.confidence}%
-                  </div>
-                )}
-              </>
-            ) : (
-              <p>{plan || fallbackPlanText}</p>
-            )}
-          </>
-        )}
+      <div className="plan-section">
+        <div className="plan-header">
+          <strong>Response Plan</strong>
+          {hasChanges && <span className="unsaved-tag">Unsaved Changes</span>}
+        </div>
+
+        <ul className="plan-list" style={{ listStyle: "none", padding: 0 }}>
+          {/* 1. Crisis Status Toggle */}
+          <li
+            className="action-item"
+            style={{
+              marginBottom: "20px",
+              paddingBottom: "10px",
+              borderBottom: "1px solid #eee",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {isLocked ? (
+                <span style={{ color: "#f44336", fontWeight: "bold" }}>
+                  [inactive]
+                </span>
+              ) : (
+                <input
+                  type="checkbox"
+                  checked={!localActive}
+                  onChange={handleToggleActive}
+                  style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                />
+              )}
+              <strong style={{ color: localActive ? "#000" : "#666" }}>
+                {localActive ? "Crisis is Active" : "Mark as Resolved"}
+              </strong>
+            </div>
+            <div
+              style={{
+                marginLeft: "28px",
+                fontSize: "0.7rem",
+                fontWeight: "bold",
+              }}
+            >
+              {isLocked ? (
+                <span style={{ color: "#f44336" }}>PERMANENTLY RESOLVED</span>
+              ) : localActive !== event.is_active ? (
+                <span style={{ color: "#2196F3" }}>
+                  ● STATUS CHANGE PENDING
+                </span>
+              ) : (
+                <span style={{ color: "#9e9e9e" }}>CURRENT STATUS</span>
+              )}
+            </div>
+          </li>
+
+          {/* 2. Action Items */}
+          {localActions.map((action, index) => {
+            const isPermanentlyDone = event.actions?.[index]?.done;
+            const isDraftChange = action.done !== !!isPermanentlyDone;
+
+            return (
+              <li
+                key={index}
+                className="action-item"
+                style={{ marginBottom: "15px" }}
+              >
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={action.done}
+                    disabled={isPermanentlyDone}
+                    onChange={() => handleToggleLocalAction(index)}
+                    style={{
+                      width: "18px",
+                      height: "18px",
+                      cursor: isPermanentlyDone ? "not-allowed" : "pointer",
+                    }}
+                  />
+                  <span
+                    style={{
+                      textDecoration: action.done ? "line-through" : "none",
+                    }}
+                  >
+                    {action.task}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    marginLeft: "28px",
+                    fontSize: "0.7rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {isPermanentlyDone ? (
+                    <span style={{ color: "#4CAF50" }}>✓ COMPLETED</span>
+                  ) : isDraftChange ? (
+                    <span style={{ color: "#2196F3" }}>● UNPUSHED CHANGE</span>
+                  ) : (
+                    <span style={{ color: "#9e9e9e" }}>AWAITING DEPLOYMENT</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* BUTTON FOOTER */}
+        <div
+          style={{
+            marginTop: "30px",
+            borderTop: "1px solid #eee",
+            paddingTop: "20px",
+          }}
+        >
+          <button
+            className="btn-primary"
+            disabled={!hasChanges}
+            onClick={handlePushUpdates}
+            style={{
+              padding: "12px 24px",
+              fontSize: "0.9rem",
+              fontWeight: "600",
+              cursor: hasChanges ? "pointer" : "not-allowed",
+              backgroundColor: hasChanges ? "#2196F3" : "#ccc",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              minWidth: "160px",
+              transition: "all 0.2s ease",
+            }}
+          >
+            Push Updates
+          </button>
+        </div>
       </div>
     </div>
   );

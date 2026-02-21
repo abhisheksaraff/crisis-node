@@ -30,11 +30,18 @@ const MapFocus = ({ event }) => {
 
 export default function MapView({ events, selectedEvent, onSelect }) {
   const fallbackCenter = [20, 0];
-  const center = selectedEvent ? [selectedEvent.lat, selectedEvent.lng] : fallbackCenter;
+  const center = selectedEvent
+    ? [selectedEvent.lat, selectedEvent.lng]
+    : fallbackCenter;
   const zoom = selectedEvent ? 6 : 2;
 
   return (
-    <MapContainer center={center} zoom={zoom} scrollWheelZoom className="map-container">
+    <MapContainer
+      center={center}
+      zoom={zoom}
+      scrollWheelZoom
+      className="map-container"
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -50,11 +57,22 @@ export default function MapView({ events, selectedEvent, onSelect }) {
           }}
         >
           <Popup>
-            <strong>{event.title}</strong>
-            <div>{event.source}</div>
-            <div>{formatTimestamp(event.timestamp)}</div>
-            <div>
-              {event.type} • {event.confidence}% confidence
+            <div className="map-popup">
+              <strong>{event.title}</strong>
+              <div>{event.source[0]?.name ?? "Unknown source"}</div>
+              <div style={{ fontSize: "0.85em", color: "#666" }}>
+                {formatTimestamp(event.timestamp)}
+              </div>
+              <div
+                style={{
+                  marginTop: "4px",
+                  fontWeight: "bold",
+                  textTransform: "capitalize",
+                }}
+              >
+                {event.type}
+              </div>
+              <div>{/* {event.type} • {event.confidence}% confidence */}</div>
             </div>
           </Popup>
         </Marker>

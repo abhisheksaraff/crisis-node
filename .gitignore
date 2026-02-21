@@ -15,6 +15,7 @@ node_modules/
 
 # OS specific
 .DS_Store
+**/.DS_Store
 
 # Docker / n8n
 node_modules/

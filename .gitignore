@@ -22,6 +22,8 @@ node_modules/
 *.log
 
 # Ignore the actual database and binary files
-orchestration/binaryData/
-orchestration/database.sqlite
-orchestration/backups/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+orchestration/data/binaryData/
+orchestration/data/backups/

@@ -1,0 +1,495 @@
+{
+  "name": "crisis-node",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# ROLE\nYou are a UN OCHA(Office for the Coordination of Humanitarian Affairs) Senior Information Management Detective Officer. Your mission is to identify, triage, and coordinate response plans for global humanitarian crises using the OCHA Command Center Database.\n\n# LOCATION\nlocation:{{ $json.location }}\n\n# CORE OPERATING PROCEDURES (SOP)\nYou must follow these steps in order:\n\n1. ***DISCOVERY**: Use `get_location_triage`  to gather ground-truth evidence using \"{{ $json.location }}\" as the input\n\n1. ***INVESTIGATION**: Compare the ground-truth news against existing alerts/tasks.\n2. **DECISION**: \n   SELECT ONE PATH:\n* CREATE: If the news describes a crisis that has not been added to alerts yet.\n* RESOLVE: If the news explicitly states the crisis is over or the threat is gone.\n* UPDATE: If the news is received for a crisis that is already in the alerts.\n\n# OUTPUT FORMAT RULES (STRICT JSON ONLY)\n{ \n\t\"action\": \"CREATE | UPDATE | RESOLVE\", \n\t\"reasoning\": \"Brief explanation of why this action was chosen based on the news.\", \n\t\"raw_data\": { \"insert_full_json_from_get_location_triage_here\" }\n }",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2656,
+        224
+      ],
+      "id": "5bd37817-e13f-48e7-8889-fb4393c56c8c",
+      "name": "Detective",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "location",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        208
+      ],
+      "id": "c9a86777-e2c2-4833-a58c-b2adc916cfbb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.BACKEND_URL }}/agent/context",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1792,
+        208
+      ],
+      "id": "c5a7bf41-503f-489a-ac5e-60743fdb752a",
+      "name": "get context"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to close an alert when the news confirms the crisis has ended or is resolved. This marks the alert as inactive. Use this ONLY when you see news confirming it.",
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/agent/resolve",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "alert_id",
+              "value": "={{ $json.data.raw_data[0].existing_alerts[0].alert_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        3824,
+        432
+      ],
+      "id": "ddd8de4f-272e-4f3c-aa5e-74dd3d7944a4",
+      "name": "resolve_incident"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to append a new news source to an existing alert.",
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/agent/process-update",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.parse($fromAI(\"alert_data\", \"Generate a valid JSON object with fields: name, url). Do not include markdown code blocks.\")) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        3664,
+        432
+      ],
+      "id": "0d5df825-a646-406d-8549-32c5e692a382",
+      "name": "update_alert_incident"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to create a brand new crisis alert in the database when no matching alert exists. Requires full event details JSON Object called alert_data and a list of tasks. Save a formal OCHA 3-point response plan to the database. Use this ONLY after you have triaged a location and confirmed a crisis exists. ",
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/agent/process-new",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.parse($fromAI(\"alert_data\", \"Generate a valid JSON object with fields: event, title, description, actions (list), and location (object). Do not include markdown code blocks.\")) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        3488,
+        432
+      ],
+      "id": "0dccb74f-1205-467b-8b17-6898e6349f7a",
+      "name": "create_humanitarian_alert"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $execution.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        2672,
+        432
+      ],
+      "id": "8b240ee0-6e39-4562-8bc2-b07983288f6f",
+      "name": "Detective Memory"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        432
+      ],
+      "id": "92b60478-1b7a-42b2-aaa6-8f81c06fb0c2",
+      "name": "Detective AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "rTxZvNjKRrxs8Onx",
+          "name": "crisis-node"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Fetches the full news text and evidence for a specific city. You MUST provide the location name as input.",
+        "url": "={{ $env.BACKEND_URL }}/agent/triage/{{ $json.location }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        2832,
+        432
+      ],
+      "id": "3748037a-1e30-4265-9ca2-11af3f739801",
+      "name": "get_location_triage"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the string inside \"output\" into a real JSON object\nconst cleanData = JSON.parse($input.first().json.output);\n\n// Return the data as individual fields for the Executor to use\nreturn {\n  data: {\n  action: cleanData.action,\n  reasoning: cleanData.reasoning,\n  raw_data: cleanData.raw_data\n}\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3024,
+        224
+      ],
+      "id": "f832f71b-d74b-478e-9193-be9cb0f6ebaa",
+      "name": "Clean Detective Output"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# ROLE\nYou are a UN OCHA(Office for the Coordination of Humanitarian Affairs) Senior Information Management Executive Officer. Your role is to identify, triage, and coordinate response plans for global humanitarian crises using the sop below.\n\n# INPUT DATA\n\nYou have the following data from detective:\n\nACTION: {{ $json.data.action }}\nREASONING: {{ $json.data.reasoning }}\nNEW_NEWS:{{ $json.data.raw_data.toJsonString() }}\nEXISTING_ALERTS: {{ $json.data.raw_data.existing_alerts }}\nRECENT_HISTORY: {{ $json.data.raw_data.recent_history }}\n\n- `action`: The specific database operation to perform.\n- `reasoning`: The justification for this action.\n- `new_news`, `existing_alerts`, `recent_history`: The full JSON intelligence gathered from the triage tool.\n\n# MISSION\nUnpack the `new_news`, `existing_alerts`, `recent_history`and execute the tool that matches the `action`.\n\n# OUTPUT FORMAT RULES (STRICT DATA ONLY)\n\n# OPERATING PROCEDURES (SOP)\n\n1. **IF ACTION == \"CREATE\"**:\n   - Locate the new news item in `raw_data`.\n   - Use the news headline as the title and the article summary as the description.\n- **Tone**: Professional, calm, and authoritative. Use OCHA terminology (e.g., \"situational awareness\", \"cluster coordination\").\n- Call the `create_humanitarian_alert` tool. When calling `create_humanitarian_alert`, you MUST populate the `alert_data` argument with this strict JSON structure. Do not omit fields.\n\n\"alert_data\": \n{\n  \"event\": {{ $json.data.raw_data.new_news[0].event }},\n  \"title\": {{ $json.data.raw_data.new_news[0].title }},\n  \"description\": {{ $json.data.raw_data.new_news[0].description }},\n  \"content\": {{ $json.data.raw_data.new_news[0].content }},\n  [\n  {\"task\": \"Primary life-saving action\", \"done\": false},\n  {\"task\": \"Secondary coordination action\", \"done\": false},\n  {\"task\": \"Tertiary assessment action\", \"done\": false}\n],\n  \"sources\": [\n    {\n\"name\": [Name of news source], \n\"url\": {{ $json.data.raw_data.new_news[0].link }}\", \n}\n  ],\n  \"location\": {\n    \"lat\": {{ $json.data.raw_data.new_news[0].location.lat }},\n    \"lon\": {{ $json.data.raw_data.new_news[0].location.lon }},\n    \"name\": {{ $json.data.raw_data.new_news[0].location.name }}\n  },\n  \"is_read\": false,\n  \"is_active\": [true or false depending if crisis is still active],\n\n\n2. **IF ACTION == \"UPDATE\"**:\n   - Find the `name` for the new news evidence.\n   - Call the `update_alert_incident` tool using these specific identifiers for each new news source updating it.\n\n{ \n\t\"alert_id\": {{ $json.data.raw_data[0].recent_history[0].alert_id }}, \n\t\"new_source\": \n\t{ \n\t\t\"name\": \"[News Outlet Name from news_items]\", \n\t\t\"url\": {{ $json.data.raw_data[0].new_news[0].link }}, \n\t}\n}\n}\n\n3. **IF ACTION == \"RESOLVE\"**:\n   - Call the `resolve_incident` tool to close the case in the Command Center.\n\n# CONSTRAINTS\n- Do not ask for clarification. The Detective's `data` contains everything you need.\n- If multiple alerts or news items exist in `raw_data`, use the ones referenced in the Detective's `reasoning`.\n- Respond with a confirmation once the tool call is successful. ",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3280,
+        224
+      ],
+      "id": "299ec568-ac15-496e-87bf-81a5d2aa2995",
+      "name": "Executor",
+      "executeOnce": false,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2304,
+        208
+      ],
+      "id": "1c75faf7-e4ab-4811-a444-aa235a4d64df",
+      "name": "Loop Over Locations",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $execution.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        3328,
+        432
+      ],
+      "id": "2c35fb59-a6b9-4a5d-b2bf-369dfda3cd37",
+      "name": "Executor Memory"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        432
+      ],
+      "id": "a58b856d-1034-4d0a-bb13-0334898f5338",
+      "name": "Executor AI",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "rTxZvNjKRrxs8Onx",
+          "name": "crisis-node"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        128
+      ],
+      "id": "c950c718-be7f-46be-a61e-6aa2940b7ef7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orchestration",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1488,
+        336
+      ],
+      "id": "9b8cb5ad-fd5a-45b7-8d12-3f1b8f08f7e1",
+      "name": "Webhook",
+      "webhookId": "62a4eee0-9f97-490b-88c9-7fe387c9a859"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_URL }}/agent/workflow-complete",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "message",
+              "value": "Orchestration Complete"
+            }
+          ]
+        },
+        "options": {
+          "response": {}
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2720,
+        0
+      ],
+      "id": "f5a4c4c3-d0ff-4f64-82d5-a248be1595cf",
+      "name": "POST Workflow Complete"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Detective": {
+      "main": [
+        [
+          {
+            "node": "Clean Detective Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get context": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Locations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "resolve_incident": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_alert_incident": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_humanitarian_alert": {
+      "ai_tool": [
+        [
+          {
+            "node": "Executor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detective Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Detective",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detective AI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Detective",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_location_triage": {
+      "ai_tool": [
+        [
+          {
+            "node": "Detective",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Detective Output": {
+      "main": [
+        [
+          {
+            "node": "Executor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executor": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Locations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Locations": {
+      "main": [
+        [
+          {
+            "node": "POST Workflow Complete",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Detective",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executor Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Executor",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executor AI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Executor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "get context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "get context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "43188e1b-2029-43fd-a9f1-fb2c80478e2a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0e29b51f15abb181dec145795f8b980164ca8b9a9ee67bff6ca1976ba154ffa4"
+  },
+  "id": "0YGZ56xdYJ0Pr-kka2UrA",
+  "tags": []
+}

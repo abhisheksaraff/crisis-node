@@ -8,8 +8,12 @@
   --muted: #5c5b58;
   --accent: #1b6b5f;
   --accent-2: #e07a3f;
-  --fire: #f25c54;
+  --wildfire: #f25c54;
   --flood: #3b82f6;
+  --earthquake: #3a830c;
+  --cyclone: #cbc705;
+  --blizzard: #7af0f9;
+  --volcano: #ff0000;
   --shadow: 0 20px 60px rgba(25, 25, 25, 0.12);
   --radius: 20px;
 }
@@ -227,29 +231,51 @@ body {
   color: white;
 }
 
-.badge.fire {
-  background: var(--fire);
+.badge.wildfire {
+  background: var(--wildfire);
 }
 
 .badge.flood {
   background: var(--flood);
 }
 
+.badge.cyclone {
+  background: var(--cyclone);
+}
+
+.badge.earthquake {
+  background: var(--earthquake);
+}
+
+.badge.blizzard {
+  background: var(--blizzard);
+}
+
+.badge.volcano {
+  background: var(--volcano);
+}
+
 .main {
   display: grid;
-  grid-template-rows: 1.2fr 0.8fr;
+  grid-template-rows: 1fr 1fr;
+  height: calc(100vh - 120px);
   gap: 18px;
 }
 
 .map-panel {
   padding: 0;
   overflow: hidden;
+  height: 500px;
 }
 
 .map-container {
   width: 100%;
   height: 100%;
   min-height: 380px;
+}
+
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+  height: 100%;
 }
 
 .details-panel h3 {
@@ -321,12 +347,28 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
 }
 
-.event-marker.fire {
-  background: var(--fire);
+.event-marker.wildfire {
+  background: var(--wildfire);
 }
 
 .event-marker.flood {
   background: var(--flood);
+}
+
+.event-marker.earthquake {
+  background: var(--earthquake);
+}
+
+.event-marker.cyclone {
+  background: var(--cyclone);
+}
+
+.event-marker.blizzard {
+  background: var(--blizzard);
+}
+
+.event-marker.volcano {
+  background: var(--volcano);
 }
 
 .event-marker.pulse {

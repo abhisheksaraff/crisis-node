@@ -4,9 +4,8 @@ from typing import List
 from gnews import GNews
 from googlenewsdecoder import gnewsdecoder
 from newspaper import Article, Config
-
-from data.db import create_news
-from backend.app.schemas.news import NewsEntry
+from app.db.news_db import create_news
+from app.schemas.news import NewsEntry
 
 # Initialization for the NLTK tokenizer
 nltk.download('punkt', quiet=True)
@@ -55,24 +54,26 @@ def save_to_file(entries: List[NewsEntry], filename: str = "news.json"):
         print(f"File Save Error: {e}")
 
 def save_to_database(entries: List[NewsEntry]):
-    """Iterates through entries and saves each to Cloudant DB via db.py."""
+    """Iterates through entries and saves each to Supabase via news_db.py."""
     count = 0
     for entry in entries:
         try:
-            # Convert Pydantic object to dict for Cloudant
+            # Convert Pydantic object to dict for Supabase
             res = create_news(entry.model_dump())
-            if res and ("ok" in res or "id" in res):
+            
+            # Supabase-py response check. Typically hasattr(res, 'data') or checking if it returned a list
+            if res and hasattr(res, 'data') and res.data:
                 count += 1
         except Exception as e:
             print(f"DB Save Error for {entry.title[:30]}: {e}")
-    print(f"Successfully synced {count} new articles to Cloudant.")
+    print(f"Successfully synced {count} new articles to Supabase.")
 
 # --- 3. CORE LOGIC ---
 
 def run_scraper():
     """Main execution logic for scraping news."""
-    google_news = GNews(language='en', period='12h', max_results=5)
-    keywords = ['flood', 'earthquake', 'wildfire', 'cyclone']
+    google_news = GNews(language='en', period='24h', max_results=3)
+    keywords = ['flood', 'earthquake', 'wildfire', 'cyclone', "blizzard", "volcano"]
     collected_entries = []
 
     print("Starting disaster scrapers...")
@@ -104,7 +105,7 @@ def run_scraper():
 
     # Modular Storage Calls
     #save_to_file(collected_entries)
-    #save_to_database(collected_entries)
+    save_to_database(collected_entries)
     
 def scraper_wrapper():
     """This function acts as the bridge between the FastAPI scheduler and the scraper."""
@@ -114,6 +115,6 @@ def scraper_wrapper():
         print("Background Task: Scrape complete.")
     except Exception as e:
         print(f"Background Task Error: {e}")
-
+        
 if __name__ == "__main__":
     run_scraper()

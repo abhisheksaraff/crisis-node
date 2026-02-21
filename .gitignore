@@ -4,3 +4,16 @@ verification/.env
 frontend/node_modules/
 .env
 venv
+
+# Docker / n8n
+node_modules/
+.n8n/
+*.log
+
+# Ignore the actual database and binary files
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.journal
+orchestration/data/binaryData/
+orchestration/data/backups/

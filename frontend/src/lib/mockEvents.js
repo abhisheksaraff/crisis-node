@@ -201,40 +201,6 @@ const mockEvents = [
     timestamp: minutesAgo(90),
   },
   {
-    id: "942ea922-03eb-4f94-b497-c3140bc072fa",
-    type: "blizzard",
-    name: "Unknown",
-    lat: 0,
-    lng: 0,
-    title:
-      "Baby Born During Blizzard Nearly Died. Her Condition Turned Around After Being Baptized, Prayed Over - People.com",
-
-    source: [
-      {
-        url: "https://news.google.com/rss/articles/CBMijgFBVV95cUxObDZZc3F1bGFMMGxCQ2FDWWRaMlY2VWFpMXdMSzE2bGRsREx5R05RcHZlZ1dfS1pIU2ctUS1ldXNrbzhIZF82Zkw0NGNWZ0pFbDBpQVN5dEVNZFpMYkZ4Mklab0hpaHVobTRwdGkzVFgzWDc4aWNNdjFxclFXeTNEbDhEVDNJT05Ec1VSYjVB?oc=5&hl=en-CA&gl=CA&ceid=CA:en",
-        name: "People.com",
-      },
-    ],
-    details:
-      "Reported incident of a newborn nearly dying during a blizzard. The situation underscores the need for situational awareness regarding medical access and emergency response during extreme weather events. OCHA is monitoring the impact of the blizzard on local health services and infrastructure to determine if further cluster coordination is required.",
-    actions: [
-      {
-        done: false,
-        task: "Initiate situational awareness monitoring for blizzard-affected areas to identify disruptions in emergency medical services.",
-      },
-      {
-        done: false,
-        task: "Coordinate with local health clusters and emergency responders to ensure access for critical medical cases during severe weather.",
-      },
-      {
-        done: false,
-        task: "Assess the impact of the blizzard on infrastructure and vulnerable populations to determine further humanitarian needs.",
-      },
-    ],
-    is_active: true,
-    timestamp: minutesAgo(120),
-  },
-  {
     id: "af6b9245-eb3b-4286-978b-f2ae3652309b",
     type: "wildfire",
     name: "Texas, USA",
@@ -299,39 +265,6 @@ const mockEvents = [
     ],
     is_active: true,
     timestamp: minutesAgo(180),
-  },
-  {
-    id: "eda02a72-4230-461b-8870-733e6d970351",
-    type: "blizzard",
-    name: "Utqiagvik, Alaska",
-    lat: 71.2906,
-    lng: -156.7887,
-    title:
-      "This city gets blizzards all the time. Here’s why it’s still technically a desert. - The Washington Post",
-    source: [
-      {
-        url: "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNMkJ3MkhzMUhCVzI5UFQtT1NnNzY0Vi1aMVEyN3FaYkFGcGtDSm5Lb1JZQ3ZnbUcyTVdNRVVYNWFONV9zanE3V2l1b2gxYkFWd01ZSEhyOTEybllTZVltM2pBdFUzdTVhdHVxdHdKb05MbXJXQ3hKVG1lc3lhcmllNFo5aFA3YUZsNGc4?oc=5&hl=en-CA&gl=CA&ceid=CA:en",
-        name: "The Washington Post",
-      },
-    ],
-    details:
-      "The National Weather Service in Fairbanks, Alaska, issues an average of 50 blizzard warnings every year. Many cover Utqiagvik, the nation’s northernmost city. Wintertime temperatures there routinely drop below minus-40.",
-    actions: [
-      {
-        done: false,
-        task: "Monitor situational awareness regarding the high frequency of blizzard warnings and extreme cold in Utqiagvik.",
-      },
-      {
-        done: false,
-        task: "Coordinate with local Alaskan health and shelter clusters to ensure winterization support for vulnerable populations.",
-      },
-      {
-        done: false,
-        task: "Assess potential disruptions to essential supply chains and emergency service access due to recurring severe weather.",
-      },
-    ],
-    is_active: true,
-    timestamp: minutesAgo(210),
   },
   {
     id: "edbd5de2-9f61-4070-886c-91184b170019",

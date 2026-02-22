@@ -1,5 +1,6 @@
 {
   "name": "crisis-node-frontend",
+  "homepage": "https://abhisheksaraff.github.io/crisis-node",
   "private": true,
   "version": "0.0.0",
   "type": "module",

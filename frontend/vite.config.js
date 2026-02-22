@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  base: "/crisis-node/",
   server: {
     host: true, // Listen on all local IPs
     port: 5173,

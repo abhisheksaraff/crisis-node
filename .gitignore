@@ -13,6 +13,10 @@ __pycache__/
 # Frontend
 node_modules/
 
+# Production build folders
+frontend/build/
+frontend/dist/
+
 # OS specific
 .DS_Store
 **/.DS_Store

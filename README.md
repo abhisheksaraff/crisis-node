@@ -9,11 +9,11 @@ Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&log
 [![CSS](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![n8n](https://img.shields.io/badge/n8n-FF6C37?style=for-the-badge&logo=n8n&logoColor=white)](https://n8n.io/)
+[![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![Gemini 3
 Flash](https://img.shields.io/badge/Gemini_3_Flash_Preview-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
-[![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 
 ------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ Flash](https://img.shields.io/badge/Gemini_3_Flash_Preview-8E75B2?style=for-the-
 Developed for the **IBM Dev Day Hackathon 2026**, Crisis Node is a
 high-fidelity disaster intelligence system.
 
-It automates the lifecycle of humanitarian alerts --- moving from raw
+It leverages **Generative AI** and **Large Language Models (LLMs)** to automate the lifecycle of humanitarian alerts --- moving from raw
 web scraping → AI verification → multi-agent reasoning →
 human-in-the-loop task execution using **Gemini 3 Flash**.
 
@@ -66,6 +66,26 @@ graph TD
     J --> L
 ```
 
+------------------------------------------------------------------------
+## Core Competencies & Implementation
+
+### 1. Prompt Engineering & LLM Reliability
+
+- Utilizes Gemini 3 Flash with sophisticated Role-Based Prompting (UN OCHA Persona).
+- Chain-of-Thought (CoT): Agents are instructed to reason through the "Ground Truth" vs "Existing State" before executing database calls.
+- Schema Enforcement: Strict JSON output guardrails ensure that non-deterministic Generative AI responses integrate seamlessly with the transactional backend.
+
+### 2. Data Pipeline Optimization
+
+- The system handles the "Latency-to-Action" gap through a multi-stage pipeline:
+- Ingestion: Automated scraping and purging of stale news data.
+- Enrichment: Automated geospatial tagging (Lat/Long) using LLMs to bypass manual entry errors.
+- Batch Processing: Utilizes a "Split in Batches" orchestration pattern to handle concurrent global crises without hitting token limits.
+
+### 3. Model Deployment & Infrastructure
+
+- Containerized Microservices: Full Model Deployment and orchestration using Docker Compose.
+- Decoupled Architecture: Separates the "Control Plane" (n8n) from the "Execution Plane" (FastAPI), ensuring heavy data processing does not block the UI.
 ------------------------------------------------------------------------
 
 ## The 3-Step Pipeline

@@ -26,7 +26,9 @@ It leverages **Generative AI** and **Large Language Models (LLMs)** to automate 
 web scraping → AI verification → multi-agent reasoning →
 human-in-the-loop task execution using **Gemini 3 Flash**.
 
-![Website Demo](./public/crisis-node.gif)
+<p align="center">
+  <img src="./public/crisis-node.gif" alt="Website Demo" width="100%">
+</p>
 
 ------------------------------------------------------------------------
 
